@@ -11,6 +11,20 @@ app = Flask(__name__)
 config = app.config
 
 
+def load_config_if_exists(fname):
+    if os.path.isfile(fname):
+        app.config.from_pyfile(fname)
+    else:
+        print "Config file {0} does not exist, skipping".format(fname)
+
+
+load_config_if_exists('reference.cfg')
+load_config_if_exists('application.cfg')
+
+print "Connecting to Impala on {0}:{1}".format(
+    config['IMPALA_HOST'], config['IMPALA_PORT'])
+
+
 def query_impala(sql):
     cursor = query_impala_cursor(sql)
     result = cursor.fetchall()
@@ -86,19 +100,7 @@ def handle_invalid_usage(error):
     return error.message.replace('AnalysisException: ', ''), 400
 
 
-def load_config_if_exists(fname):
-    if os.path.isfile(fname):
-        app.config.from_pyfile(fname)
-    else:
-        print "Config file {0} does not exist, skipping".format(fname)
-
-
 if __name__ == "__main__":
-    load_config_if_exists('reference.cfg')
-    load_config_if_exists('application.cfg')
-
-    print "Connecting to Impala on {0}:{1}".format(
-        config['IMPALA_HOST'], config['IMPALA_PORT'])
 
     app.run(
         host=config['HOST'],
