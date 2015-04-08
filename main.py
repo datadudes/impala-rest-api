@@ -1,8 +1,10 @@
+import json
 import os.path
 
-from flask import Flask, request
+from flask import Flask, request, Response
 from impala.dbapi import connect
 from impala.error import Error
+from mime_utils import request_accepts_csv
 
 
 app = Flask(__name__)
@@ -29,6 +31,13 @@ def result2csv(records, column_names, include_header):
     list_of_str = [','.join(map(str, rec)) for rec in records]
     csv = '\n'.join(list_of_str)
     return csv
+
+
+def result2json(records, column_names):
+    results = []
+    for record in records:
+        results.append({c: str(record[i]) for (i, c) in enumerate(column_names)})
+    return json.dumps(results)
 
 
 def is_select(sql):
@@ -63,9 +72,12 @@ def impala():
             'Response contains {0} records, max allowed is {1}.'
                 .format(len(records), config['MAX_RECORDS_IN_RESPONSE']))
 
-    csv = result2csv(records, column_names, include_column_names)
-
-    return csv
+    if request_accepts_csv():
+        csv = result2csv(records, column_names, include_column_names)
+        return Response(csv, mimetype='text/csv')
+    else:
+        j = result2json(records, column_names)
+        return Response(j, mimetype='application/json')
 
 
 @app.errorhandler(Error)
