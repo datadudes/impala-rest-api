@@ -120,4 +120,8 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 
+# Autoenv
 .env
+
+# custom conf
+application.conf
