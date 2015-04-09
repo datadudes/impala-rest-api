@@ -2,47 +2,27 @@ import json
 import os.path
 
 from flask import Flask, request, Response
-from impala.dbapi import connect
 from impala.error import Error
 from mime_utils import request_accepts_csv
+from server.query import query_impala
 
 
-app = Flask(__name__)
+def init_config(application):
+    application.config.from_object('server.reference_config')
+    application.config.from_envvar('IMPALA_API_CONFIG', silent=True)
+    application.config['IMPALA_HOST'] = os.environ.get('IMPALA_HOST', application.config['IMPALA_HOST'])
+    application.config['IMPALA_PORT'] = os.environ.get('IMPALA_PORT', application.config['IMPALA_PORT'])
+    application.config['SECURITY_TOKEN'] = os.environ.get('SECURITY_TOKEN', application.config['SECURITY_TOKEN'])
 
 
-def load_config_if_exists(fname):
-    if os.path.isfile(fname):
-        app.config.from_pyfile(fname)
-    else:
-        print "Config file {0} does not exist, skipping".format(fname)
+def create_app():
+    application = Flask(__name__)
+    init_config(application)
+    print "Connecting to Impala on {0}:{1}".format(
+        application.config['IMPALA_HOST'], application.config['IMPALA_PORT'])
+    return application
 
-
-def init_config():
-    load_config_if_exists('reference.cfg')
-    load_config_if_exists('application.cfg')
-    app.config['IMPALA_HOST'] = os.environ.get('IMPALA_HOST', app.config['IMPALA_HOST'])
-    app.config['IMPALA_PORT'] = os.environ.get('IMPALA_PORT', app.config['IMPALA_PORT'])
-    app.config['SECURITY_TOKEN'] = os.environ.get('SECURITY_TOKEN', app.config['SECURITY_TOKEN'])
-
-init_config()
-config = app.config
-
-print "Connecting to Impala on {0}:{1}".format(
-    config['IMPALA_HOST'], config['IMPALA_PORT'])
-
-
-def query_impala(sql):
-    cursor = query_impala_cursor(sql)
-    result = cursor.fetchall()
-    field_names = [f[0] for f in cursor.description]
-    return result, field_names
-
-
-def query_impala_cursor(sql, params=None):
-    conn = connect(host=config['IMPALA_HOST'], port=config['IMPALA_PORT'])
-    cursor = conn.cursor()
-    cursor.execute(sql.encode('utf-8'), params)
-    return cursor
+app = create_app()
 
 
 def result2csv(records, column_names, include_header):
@@ -72,7 +52,7 @@ def str_is_true(string):
 def authenticate():
     token = request.args.get('token', '')
     # FIXME: Use Google API authentication instead
-    if token != config['SECURITY_TOKEN']:
+    if token != app.config['SECURITY_TOKEN']:
         return "Unauthorized", 401
 
 
@@ -87,10 +67,13 @@ def impala():
 
     records, column_names = query_impala(sql_query)
 
-    if len(records) > config['MAX_RECORDS_IN_RESPONSE']:
+    if len(records) > app.config['MAX_RECORDS_IN_RESPONSE']:
         raise ValueError(
-            'Response contains {0} records, max allowed is {1}.'
-                .format(len(records), config['MAX_RECORDS_IN_RESPONSE']))
+            'Response contains {0} records, max allowed is {1}.'.format(
+                len(records),
+                app.config['MAX_RECORDS_IN_RESPONSE']
+            )
+        )
 
     if request_accepts_csv():
         csv = result2csv(records, column_names, include_column_names)
@@ -105,10 +88,3 @@ def impala():
 def handle_invalid_usage(error):
     return error.message.replace('AnalysisException: ', ''), 400
 
-
-if __name__ == "__main__":
-
-    app.run(
-        host=config['HOST'],
-        port=config['PORT'],
-        debug=config['DEBUG_MODE'])
