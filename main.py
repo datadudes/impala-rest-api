@@ -8,7 +8,6 @@ from mime_utils import request_accepts_csv
 
 
 app = Flask(__name__)
-config = app.config
 
 
 def load_config_if_exists(fname):
@@ -18,8 +17,15 @@ def load_config_if_exists(fname):
         print "Config file {0} does not exist, skipping".format(fname)
 
 
-load_config_if_exists('reference.cfg')
-load_config_if_exists('application.cfg')
+def init_config():
+    load_config_if_exists('reference.cfg')
+    load_config_if_exists('application.cfg')
+    app.config['IMPALA_HOST'] = os.environ.get('IMPALA_HOST', app.config['IMPALA_HOST'])
+    app.config['IMPALA_PORT'] = os.environ.get('IMPALA_PORT', app.config['IMPALA_PORT'])
+    app.config['SECURITY_TOKEN'] = os.environ.get('SECURITY_TOKEN', app.config['SECURITY_TOKEN'])
+
+init_config()
+config = app.config
 
 print "Connecting to Impala on {0}:{1}".format(
     config['IMPALA_HOST'], config['IMPALA_PORT'])
