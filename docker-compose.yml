@@ -2,10 +2,14 @@ web:
   build: .
   command: python wsgi.py
   ports:
-   - "5000:5000"
+    - "5000:5000"
   volumes:
-   - .:/code
+    - .:/code
   links:
-   - redis
+    - redis
+  environment:
+    - IMPALA_HOST
+    - IMPALA_PORT
+    - SECURITY_TOKEN
 redis:
   image: redis
