@@ -1,5 +1,5 @@
 # Server
-HOST = '127.0.0.1'
+HOST = '0.0.0.0'
 PORT = 5000
 DEBUG_MODE = True
 
@@ -8,7 +8,7 @@ IMPALA_HOST = 'localhost'
 IMPALA_PORT = 12345
 
 # Redis connection
-REDIS_URL = 'redis://localhost:6379'
+REDIS_URL = 'redis://redis:6379'
 
 # API settings
 SECURITY_TOKEN = '<put-security-token-here>'

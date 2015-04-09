@@ -13,6 +13,7 @@ def init_config(application):
     application.config.from_envvar('IMPALA_API_CONFIG', silent=True)
     application.config['IMPALA_HOST'] = os.environ.get('IMPALA_HOST', application.config['IMPALA_HOST'])
     application.config['IMPALA_PORT'] = os.environ.get('IMPALA_PORT', application.config['IMPALA_PORT'])
+    application.config['REDIS_URL'] = os.environ.get('REDIS_URL', application.config['REDIS_URL'])
     application.config['SECURITY_TOKEN'] = os.environ.get('SECURITY_TOKEN', application.config['SECURITY_TOKEN'])
 
 
