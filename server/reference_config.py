@@ -8,8 +8,7 @@ IMPALA_HOST = 'localhost'
 IMPALA_PORT = 12345
 
 # Redis connection
-REDIS_HOST = 'localhost'
-REDIS_PORT = 6379
+REDIS_URL = 'redis://localhost:6379'
 
 # API settings
 SECURITY_TOKEN = '<put-security-token-here>'

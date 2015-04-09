@@ -3,8 +3,9 @@ import os.path
 
 from flask import Flask, request, Response
 from impala.error import Error
-from mime_utils import request_accepts_csv
+from mime_utils import request_accepts
 from server.query import query_impala
+from server.cache import get_redis_conn, set_and_expire
 
 
 def init_config(application):
@@ -65,22 +66,29 @@ def impala():
     if not is_select(sql_query):
         return "Only SELECT queries are allowed", 403
 
-    records, column_names = query_impala(sql_query)
+    redis_conn = get_redis_conn()
+    mimetype = request_accepts()
+    key = '{}${}'.format(sql_query, mimetype)
+    payload = redis_conn.get(key)
 
-    if len(records) > app.config['MAX_RECORDS_IN_RESPONSE']:
-        raise ValueError(
-            'Response contains {0} records, max allowed is {1}.'.format(
-                len(records),
-                app.config['MAX_RECORDS_IN_RESPONSE']
+    if not payload:
+        records, column_names = query_impala(sql_query)
+
+        if len(records) > app.config['MAX_RECORDS_IN_RESPONSE']:
+            raise ValueError(
+                'Response contains {0} records, max allowed is {1}.'.format(
+                    len(records),
+                    app.config['MAX_RECORDS_IN_RESPONSE']
+                )
             )
-        )
+        if mimetype == 'text/csv':
+            payload = result2csv(records, column_names, include_column_names)
+        else:
+            payload = result2json(records, column_names)
 
-    if request_accepts_csv():
-        csv = result2csv(records, column_names, include_column_names)
-        return Response(csv, mimetype='text/csv')
-    else:
-        j = result2json(records, column_names)
-        return Response(j, mimetype='application/json')
+        set_and_expire(key, payload)
+
+    return Response(payload, mimetype=mimetype)
 
 
 @app.errorhandler(Error)
