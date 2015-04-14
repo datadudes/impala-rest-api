@@ -43,7 +43,8 @@ def result2json(records, column_names):
 
 
 def is_select(sql):
-    return sql.strip().upper().startswith("SELECT")
+    clean_sql = sql.strip().upper()
+    return clean_sql.startswith("SELECT") or clean_sql.startswith("WITH")
 
 
 def str_is_true(string):
