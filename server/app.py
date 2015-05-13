@@ -84,8 +84,10 @@ def impala():
             )
         if mimetype == 'text/csv':
             payload = result2csv(records, column_names, include_column_names)
-        else:
+        elif mimetype == 'application/json':
             payload = result2json(records, column_names)
+        else:
+            return Response("The Impala REST API only supports responses in with mimetype 'text/csv' or 'application/json'", status=406)
 
         cache.set_and_expire(sql_query, mimetype, payload)
 
