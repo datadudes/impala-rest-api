@@ -5,7 +5,7 @@ from flask import Flask, request, Response
 from impala.error import Error
 from mime_utils import request_accepts
 from server.query import query_impala
-from server.cache import get_redis_conn, set_and_expire
+from server.cache import RedisCache
 
 
 def init_config(application):
@@ -68,10 +68,9 @@ def impala():
     if not is_select(sql_query):
         return "Only SELECT queries are allowed", 403
 
-    redis_conn = get_redis_conn()
+    cache = RedisCache(app.config['REDIS_URL'])
     mimetype = request_accepts()
-    key = '{}${}'.format(sql_query, mimetype)
-    payload = redis_conn.get(key)
+    payload = cache.get(sql_query, mimetype)
 
     if not payload:
         records, column_names = query_impala(sql_query)
@@ -88,7 +87,7 @@ def impala():
         else:
             payload = result2json(records, column_names)
 
-        set_and_expire(key, payload)
+        cache.set_and_expire(sql_query, mimetype, payload)
 
     return Response(payload, mimetype=mimetype)
 

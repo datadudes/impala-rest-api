@@ -1,13 +1,6 @@
 import urlparse
 import datetime
-from flask import current_app
 import redis
-
-
-def get_redis_conn():
-    url = urlparse.urlparse(current_app.config['REDIS_URL'])
-    r = redis.StrictRedis(host=url.hostname, port=url.port, password=url.password)
-    return r
 
 
 def _tomorrow_morning():
@@ -16,7 +9,17 @@ def _tomorrow_morning():
     return datetime.datetime(tomorrow.year, tomorrow.month, tomorrow.day, 9, 00)
 
 
-def set_and_expire(key, payload):
-    redis_conn = get_redis_conn()
-    redis_conn.set(key, payload)
-    redis_conn.expireat(key, _tomorrow_morning())
+class RedisCache(object):
+
+    def __init__(self, redis_url):
+        url = urlparse.urlparse(redis_url)
+        self.conn = redis.StrictRedis(host=url.hostname, port=url.port, password=url.password)
+
+    def get(self, sql, mimetype):
+        key = '{}${}'.format(sql, mimetype)
+        return self.conn.get(key)
+
+    def set_and_expire(self, sql, mimetype, payload):
+        key = '{}${}'.format(sql, mimetype)
+        self.conn.set(key, payload)
+        self.conn.expireat(key, _tomorrow_morning())
