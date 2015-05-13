@@ -5,7 +5,7 @@ DEBUG_MODE = True
 
 # Impala connection
 IMPALA_HOST = 'localhost'
-IMPALA_PORT = 12345
+IMPALA_PORT = 21050
 
 # Redis connection
 REDIS_URL = 'redis://redis:6379'

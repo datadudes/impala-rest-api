@@ -11,10 +11,10 @@ from server.cache import get_redis_conn, set_and_expire
 def init_config(application):
     application.config.from_object('server.reference_config')
     application.config.from_envvar('IMPALA_API_CONFIG', silent=True)
-    application.config['IMPALA_HOST'] = os.environ.get('IMPALA_HOST', application.config['IMPALA_HOST'])
-    application.config['IMPALA_PORT'] = os.environ.get('IMPALA_PORT', application.config['IMPALA_PORT'])
-    application.config['REDIS_URL'] = os.environ.get('REDIS_URL', application.config['REDIS_URL'])
-    application.config['SECURITY_TOKEN'] = os.environ.get('SECURITY_TOKEN', application.config['SECURITY_TOKEN'])
+    application.config['IMPALA_HOST'] = os.environ.get('IMPALA_HOST') if os.environ.get('IMPALA_HOST') else application.config['IMPALA_HOST']
+    application.config['IMPALA_PORT'] = os.environ.get('IMPALA_PORT') if os.environ.get('IMPALA_PORT') else application.config['IMPALA_PORT']
+    application.config['REDIS_URL'] = os.environ.get('REDIS_URL') if os.environ.get('REDIS_URL') else application.config['REDIS_URL']
+    application.config['SECURITY_TOKEN'] = os.environ.get('SECURITY_TOKEN') if os.environ.get('SECURITY_TOKEN') else application.config['SECURITY_TOKEN']
 
 
 def create_app():
@@ -94,7 +94,6 @@ def impala():
 
 
 @app.errorhandler(Error)
-@app.errorhandler(Exception)
 def handle_invalid_usage(error):
     return error.message.replace('AnalysisException: ', ''), 400
 
