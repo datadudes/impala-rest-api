@@ -7,6 +7,7 @@ from server.query import query_impala
 from server.cache import RedisCache
 from server.serialization import result2csv, result2json
 
+
 def init_config(application):
     application.config.from_object('server.reference_config')
     application.config.from_envvar('IMPALA_API_CONFIG', silent=True)
