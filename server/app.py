@@ -1,4 +1,3 @@
-import json
 import os.path
 
 from flask import Flask, request, Response
@@ -6,7 +5,7 @@ from impala.error import Error
 from mime_utils import request_accepts
 from server.query import query_impala
 from server.cache import RedisCache
-
+from server.serialization import result2csv, result2json
 
 def init_config(application):
     application.config.from_object('server.reference_config')
@@ -27,21 +26,6 @@ def create_app():
 app = create_app()
 
 
-def result2csv(records, column_names, include_header):
-    if include_header:
-        records.insert(0, column_names)
-    list_of_str = [','.join(map(str, rec)) for rec in records]
-    csv = '\n'.join(list_of_str)
-    return csv
-
-
-def result2json(records, column_names):
-    results = []
-    for record in records:
-        results.append({c: str(record[i]) for (i, c) in enumerate(column_names)})
-    return json.dumps(results)
-
-
 def is_select(sql):
     clean_sql = sql.strip().upper()
     return clean_sql.startswith("SELECT") or clean_sql.startswith("WITH")
@@ -54,7 +38,6 @@ def str_is_true(string):
 @app.before_request
 def authenticate():
     token = request.args.get('token', '')
-    # FIXME: Use Google API authentication instead
     if token != app.config['SECURITY_TOKEN']:
         return "Unauthorized", 401
 
