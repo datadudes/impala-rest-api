@@ -36,7 +36,7 @@ following:
 $ docker run --name impala-api-redis -d redis # start a Redis container
 $ docker run -e IMPALA_HOST=<ip-or-host-of-impala> \
     -e SECURITY_TOKEN=<choose-a-random-token> \
-    -p <desired-port-on-docker-host>:5000
+    -p <desired-port-on-docker-host>:5000 \
     --name impala-api --link impala-api-redis:redis \
     -d datadudes/impala-rest-api:latest # start Impala REST API and link it to your Redis instance
 ```
