@@ -6,6 +6,7 @@ from mime_utils import request_accepts
 from server.query import query_impala
 from server.cache import RedisCache
 from server.serialization import result2csv, result2json
+from flask.ext.cors import CORS
 
 
 def init_config(application):
@@ -20,6 +21,7 @@ def init_config(application):
 def create_app():
     application = Flask(__name__)
     init_config(application)
+    CORS(application)
     print "Connecting to Impala on {0}:{1}".format(
         application.config['IMPALA_HOST'], application.config['IMPALA_PORT'])
     return application
