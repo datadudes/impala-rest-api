@@ -1,5 +1,5 @@
 # start with a base image
-FROM ubuntu:14.10
+FROM ubuntu:16.04
 
 # install dependencies
 RUN apt-get -y update
